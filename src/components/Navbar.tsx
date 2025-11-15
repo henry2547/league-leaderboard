@@ -4,7 +4,11 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 
-export function Navbar() {
+interface NavbarProps {
+  isPublic?: boolean;
+}
+
+export function Navbar({ isPublic = false }: NavbarProps) {
   const { user, signOut } = useAuth();
 
   return (
@@ -18,25 +22,29 @@ export function Navbar() {
             </span>
           </Link>
 
-          <div className="flex items-center gap-4">
-            <Link to="/about">
-              <Button variant="ghost">About</Button>
-            </Link>
-            <ThemeToggle />
-            {user ? (
+          <div className="flex items-center gap-2 sm:gap-4">
+            {!isPublic && (
               <>
-                <Link to="/dashboard">
-                  <Button variant="default">Dashboard</Button>
+                <Link to="/about" className="hidden sm:block">
+                  <Button variant="ghost">About</Button>
                 </Link>
-                <Button variant="outline" onClick={() => signOut()}>
-                  Sign Out
-                </Button>
+                {user ? (
+                  <>
+                    <Link to="/dashboard">
+                      <Button variant="default" size="sm" className="sm:size-default">Dashboard</Button>
+                    </Link>
+                    <Button variant="outline" size="sm" className="sm:size-default" onClick={() => signOut()}>
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <Link to="/auth">
+                    <Button variant="default" size="sm" className="sm:size-default">Sign In</Button>
+                  </Link>
+                )}
               </>
-            ) : (
-              <Link to="/auth">
-                <Button variant="default">Sign In</Button>
-              </Link>
             )}
+            <ThemeToggle />
           </div>
         </div>
       </div>
