@@ -37,10 +37,10 @@ export function StandingsTable({ standings }: StandingsTableProps) {
                 <TableHead className="min-w-[120px] text-xs sm:text-sm">Team</TableHead>
                 <TableHead className="text-center text-xs sm:text-sm">P</TableHead>
                 <TableHead className="text-center text-xs sm:text-sm">W</TableHead>
-                <TableHead className="text-center text-xs sm:text-sm hidden sm:table-cell">D</TableHead>
-                <TableHead className="text-center text-xs sm:text-sm hidden sm:table-cell">L</TableHead>
-                <TableHead className="text-center text-xs sm:text-sm hidden md:table-cell">GF</TableHead>
-                <TableHead className="text-center text-xs sm:text-sm hidden md:table-cell">GA</TableHead>
+                <TableHead className="text-center text-xs sm:text-sm">D</TableHead>
+                <TableHead className="text-center text-xs sm:text-sm">L</TableHead>
+                <TableHead className="text-center text-xs sm:text-sm">GF</TableHead>
+                <TableHead className="text-center text-xs sm:text-sm">GA</TableHead>
                 <TableHead className="text-center text-xs sm:text-sm">GD</TableHead>
                 <TableHead className="text-center font-bold text-xs sm:text-sm">Pts</TableHead>
               </TableRow>
@@ -58,10 +58,10 @@ export function StandingsTable({ standings }: StandingsTableProps) {
                   <TableCell className="font-medium text-xs sm:text-sm py-2 sm:py-4">{team.team}</TableCell>
                   <TableCell className="text-center text-xs sm:text-sm py-2 sm:py-4">{team.played}</TableCell>
                   <TableCell className="text-center text-xs sm:text-sm py-2 sm:py-4">{team.won}</TableCell>
-                  <TableCell className="text-center text-xs sm:text-sm py-2 sm:py-4 hidden sm:table-cell">{team.drawn}</TableCell>
-                  <TableCell className="text-center text-xs sm:text-sm py-2 sm:py-4 hidden sm:table-cell">{team.lost}</TableCell>
-                  <TableCell className="text-center text-xs sm:text-sm py-2 sm:py-4 hidden md:table-cell">{team.goalsFor}</TableCell>
-                  <TableCell className="text-center text-xs sm:text-sm py-2 sm:py-4 hidden md:table-cell">{team.goalsAgainst}</TableCell>
+                  <TableCell className="text-center text-xs sm:text-sm py-2 sm:py-4">{team.drawn}</TableCell>
+                  <TableCell className="text-center text-xs sm:text-sm py-2 sm:py-4">{team.lost}</TableCell>
+                  <TableCell className="text-center text-xs sm:text-sm py-2 sm:py-4">{team.goalsFor}</TableCell>
+                  <TableCell className="text-center text-xs sm:text-sm py-2 sm:py-4">{team.goalsAgainst}</TableCell>
                   <TableCell className="text-center text-xs sm:text-sm py-2 sm:py-4">
                     <span className={team.goalDifference > 0 ? "text-primary font-semibold" : ""}>
                       {team.goalDifference > 0 ? "+" : ""}{team.goalDifference}

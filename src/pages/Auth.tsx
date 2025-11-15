@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
-import { Trophy } from "lucide-react";
+import { Trophy, Eye, EyeOff } from "lucide-react";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -18,6 +18,8 @@ export default function Auth() {
 
   const [signInData, setSignInData] = useState({ email: "", password: "" });
   const [signUpData, setSignUpData] = useState({ email: "", password: "", fullName: "" });
+  const [showSignInPassword, setShowSignInPassword] = useState(false);
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
 
   if (user) {
     navigate("/dashboard");
@@ -73,7 +75,7 @@ export default function Auth() {
         <div className="flex flex-col items-center gap-8">
           <div className="text-center">
             <Trophy className="h-16 w-16 mx-auto mb-4 text-primary" />
-            <h1 className="text-4xl font-bold mb-2">Welcome to LeagueManager</h1>
+            <h1 className="text-4xl font-bold mb-2">Welcome to Play Kenya</h1>
             <p className="text-muted-foreground">Create and manage your championship leagues</p>
           </div>
 
@@ -106,15 +108,31 @@ export default function Auth() {
                     </div>
                     <div>
                       <Label htmlFor="signin-password">Password</Label>
-                      <Input
-                        id="signin-password"
-                        type="password"
-                        value={signInData.password}
-                        onChange={(e) =>
-                          setSignInData({ ...signInData, password: e.target.value })
-                        }
-                        required
-                      />
+                      <div className="relative">
+                        <Input
+                          id="signin-password"
+                          type={showSignInPassword ? "text" : "password"}
+                          value={signInData.password}
+                          onChange={(e) =>
+                            setSignInData({ ...signInData, password: e.target.value })
+                          }
+                          required
+                          className="pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          onClick={() => setShowSignInPassword(!showSignInPassword)}
+                        >
+                          {showSignInPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
                     <Button type="submit" className="w-full" disabled={loading}>
                       {loading ? "Signing in..." : "Sign In"}
@@ -152,15 +170,31 @@ export default function Auth() {
                     </div>
                     <div>
                       <Label htmlFor="signup-password">Password</Label>
-                      <Input
-                        id="signup-password"
-                        type="password"
-                        value={signUpData.password}
-                        onChange={(e) =>
-                          setSignUpData({ ...signUpData, password: e.target.value })
-                        }
-                        required
-                      />
+                      <div className="relative">
+                        <Input
+                          id="signup-password"
+                          type={showSignUpPassword ? "text" : "password"}
+                          value={signUpData.password}
+                          onChange={(e) =>
+                            setSignUpData({ ...signUpData, password: e.target.value })
+                          }
+                          required
+                          className="pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          onClick={() => setShowSignUpPassword(!showSignUpPassword)}
+                        >
+                          {showSignUpPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
                     <Button type="submit" className="w-full" disabled={loading}>
                       {loading ? "Creating account..." : "Sign Up"}
