@@ -22,38 +22,39 @@ export function FixturesView({ title, fixtures, emptyMessage = "No matches sched
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <span className="text-2xl">⚽</span>
+        <CardTitle className="flex items-center gap-2 text-lg sm:text-2xl">
+          <span className="text-xl sm:text-2xl">⚽</span>
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-2 sm:px-6">
         {fixtures.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">{emptyMessage}</p>
+          <p className="text-center text-muted-foreground py-8 text-sm sm:text-base">{emptyMessage}</p>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {fixtures.map((fixture) => (
               <div
                 key={fixture.id}
-                className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors gap-3"
               >
                 <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold">{fixture.homeTeam}</span>
+                  <div className="flex items-center justify-between mb-1 sm:mb-2">
+                    <span className="font-semibold text-sm sm:text-base">{fixture.homeTeam}</span>
                     {fixture.status === "completed" && fixture.homeGoals !== undefined && (
-                      <span className="text-xl font-bold">{fixture.homeGoals}</span>
+                      <span className="text-lg sm:text-xl font-bold ml-2">{fixture.homeGoals}</span>
                     )}
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold">{fixture.awayTeam}</span>
+                    <span className="font-semibold text-sm sm:text-base">{fixture.awayTeam}</span>
                     {fixture.status === "completed" && fixture.awayGoals !== undefined && (
-                      <span className="text-xl font-bold">{fixture.awayGoals}</span>
+                      <span className="text-lg sm:text-xl font-bold ml-2">{fixture.awayGoals}</span>
                     )}
                   </div>
                 </div>
 
-                <div className="ml-6 text-right flex flex-col items-end gap-2">
+                <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 sm:ml-6 sm:text-right">
                   <Badge
+                    className="text-xs"
                     variant={
                       fixture.status === "live"
                         ? "destructive"
@@ -64,7 +65,7 @@ export function FixturesView({ title, fixtures, emptyMessage = "No matches sched
                   >
                     {fixture.status === "live" ? "LIVE" : fixture.status.toUpperCase()}
                   </Badge>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-xs sm:text-sm text-muted-foreground">
                     {format(fixture.date, "MMM d, HH:mm")}
                   </span>
                 </div>

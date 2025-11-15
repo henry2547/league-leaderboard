@@ -211,13 +211,13 @@ export default function PublicLeague() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <Trophy className="h-16 w-16 mx-auto mb-4 text-primary" />
-          <h1 className="text-4xl font-bold mb-2">{league.name}</h1>
+      <Navbar isPublic={true} />
+      <div className="container mx-auto px-4 py-4 sm:py-8">
+        <div className="text-center mb-6 sm:mb-8">
+          <Trophy className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-3 sm:mb-4 text-primary" />
+          <h1 className="text-2xl sm:text-4xl font-bold mb-2">{league.name}</h1>
           {activeSeasons.length > 0 && (
-            <p className="text-muted-foreground">{activeSeasons[0].name}</p>
+            <p className="text-sm sm:text-base text-muted-foreground">{activeSeasons[0].name}</p>
           )}
         </div>
 
@@ -229,10 +229,10 @@ export default function PublicLeague() {
           </Card>
         ) : (
           <Tabs defaultValue="standings" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="standings">Standings</TabsTrigger>
-              <TabsTrigger value="today">Today's Matches</TabsTrigger>
-              <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 h-auto">
+              <TabsTrigger value="standings" className="text-xs sm:text-sm">Standings</TabsTrigger>
+              <TabsTrigger value="today" className="text-xs sm:text-sm">Today</TabsTrigger>
+              <TabsTrigger value="upcoming" className="text-xs sm:text-sm">Upcoming</TabsTrigger>
             </TabsList>
 
             <TabsContent value="standings" className="space-y-4">
