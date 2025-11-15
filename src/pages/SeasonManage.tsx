@@ -25,6 +25,7 @@ export default function SeasonManage() {
   const [fixtureDialogOpen, setFixtureDialogOpen] = useState(false);
   const [newTeamName, setNewTeamName] = useState("");
   const [generating, setGenerating] = useState(false);
+  const [currentRound, setCurrentRound] = useState(1);
 
   useEffect(() => {
     if (!user) {
@@ -80,6 +81,10 @@ export default function SeasonManage() {
 
       if (fixturesError) throw fixturesError;
       setFixtures(fixturesData || []);
+      
+      // Calculate current round
+      const maxRound = fixturesData?.reduce((max, f) => Math.max(max, f.round || 1), 0) || 0;
+      setCurrentRound(maxRound);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -142,54 +147,53 @@ export default function SeasonManage() {
     }
   };
 
-  const generateFixtures = async () => {
+  const generateFixtures = async (round = 1) => {
     if (teams.length < 2) {
       toast({
         variant: "destructive",
         title: "Not enough teams",
-        description: "You need at least 2 teams to generate fixtures.",
+        description: "You need at least 2 teams to generate fixtures",
       });
       return;
     }
 
     setGenerating(true);
     try {
-      // Generate round-robin fixtures
+      // Generate round-robin fixtures for this round
       const allFixtures = [];
+      const numTeams = teams.length;
+      const totalRounds = numTeams % 2 === 0 ? numTeams - 1 : numTeams;
+      
+      if (round > totalRounds) {
+        toast({
+          variant: "destructive",
+          title: "All rounds completed",
+          description: "All fixture rounds have been generated",
+        });
+        setGenerating(false);
+        return;
+      }
+
+      const matchesPerRound = Math.floor(numTeams / 2);
       const startDate = new Date(season.start_date);
-      const endDate = new Date(season.end_date);
-      const totalDays = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-      
-      let fixtureIndex = 0;
-      
-      // Each team plays every other team twice (home and away)
-      for (let i = 0; i < teams.length; i++) {
-        for (let j = i + 1; j < teams.length; j++) {
-          // Home fixture
-          const homeMatchDate = new Date(startDate);
-          homeMatchDate.setDate(startDate.getDate() + Math.floor((fixtureIndex / teams.length) * totalDays));
-          
+      const roundDate = new Date(startDate);
+      roundDate.setDate(roundDate.getDate() + (round - 1) * 7); // One week between rounds
+
+      for (let match = 0; match < matchesPerRound; match++) {
+        const home = ((round - 1) + match) % (numTeams - 1);
+        const away = (numTeams - 1 - match + (round - 1)) % (numTeams - 1);
+
+        const homeIdx = match === 0 ? numTeams - 1 : home;
+        const awayIdx = away;
+
+        if (homeIdx !== awayIdx) {
           allFixtures.push({
             season_id: id,
-            home_team_id: teams[i].id,
-            away_team_id: teams[j].id,
-            match_date: homeMatchDate.toISOString(),
+            home_team_id: teams[homeIdx].id,
+            away_team_id: teams[awayIdx].id,
+            match_date: roundDate.toISOString(),
+            round: round,
           });
-          
-          fixtureIndex++;
-          
-          // Away fixture
-          const awayMatchDate = new Date(startDate);
-          awayMatchDate.setDate(startDate.getDate() + Math.floor((fixtureIndex / teams.length) * totalDays));
-          
-          allFixtures.push({
-            season_id: id,
-            home_team_id: teams[j].id,
-            away_team_id: teams[i].id,
-            match_date: awayMatchDate.toISOString(),
-          });
-          
-          fixtureIndex++;
         }
       }
 
@@ -199,7 +203,7 @@ export default function SeasonManage() {
 
       toast({
         title: "Fixtures generated!",
-        description: `${allFixtures.length} fixtures have been created.`,
+        description: `Round ${round} fixtures have been created (${allFixtures.length} matches).`,
       });
 
       setFixtureDialogOpen(false);
@@ -368,31 +372,67 @@ export default function SeasonManage() {
           </TabsContent>
 
           <TabsContent value="fixtures" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Fixtures</h2>
-              {fixtures.length === 0 && (
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h2 className="text-2xl font-bold">Fixtures</h2>
+                {currentRound > 0 && <p className="text-sm text-muted-foreground">Current Round: {currentRound}</p>}
+              </div>
+              {fixtures.length === 0 ? (
                 <Dialog open={fixtureDialogOpen} onOpenChange={setFixtureDialogOpen}>
                   <DialogTrigger asChild>
                     <Button className="gap-2" disabled={teams.length < 2}>
                       <CalendarIcon className="h-5 w-5" />
-                      Generate Fixtures
+                      Generate Round 1
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Generate Fixtures</DialogTitle>
+                      <DialogTitle>Generate First Round</DialogTitle>
                       <DialogDescription>
-                        This will create a round-robin fixture list for all teams
+                        This will create the first round of fixtures
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
-                      <p>Generate fixtures for {teams.length} teams?</p>
-                      <Button onClick={generateFixtures} className="w-full" disabled={generating}>
-                        {generating ? "Generating..." : "Generate Fixtures"}
+                      <p>Generate Round 1 fixtures for {teams.length} teams?</p>
+                      <Button onClick={() => generateFixtures(1)} className="w-full" disabled={generating}>
+                        {generating ? "Generating..." : "Generate Round 1"}
                       </Button>
                     </div>
                   </DialogContent>
                 </Dialog>
+              ) : (
+                (() => {
+                  const currentRoundFixtures = fixtures.filter(f => f.round === currentRound);
+                  const allCurrentRoundComplete = currentRoundFixtures.every(f => f.status === "completed");
+                  const numTeams = teams.length;
+                  const totalRounds = numTeams % 2 === 0 ? numTeams - 1 : numTeams;
+                  const hasMoreRounds = currentRound < totalRounds;
+
+                  return allCurrentRoundComplete && hasMoreRounds && (
+                    <Dialog open={fixtureDialogOpen} onOpenChange={setFixtureDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button className="gap-2">
+                          <CalendarIcon className="h-5 w-5" />
+                          Generate Round {currentRound + 1}
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Generate Next Round</DialogTitle>
+                          <DialogDescription>
+                            Round {currentRound} is complete. Generate the next round?
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <p>Generate Round {currentRound + 1} fixtures?</p>
+                          <Button onClick={() => generateFixtures(currentRound + 1)} className="w-full" disabled={generating}>
+                            {generating ? "Generating..." : `Generate Round ${currentRound + 1}`}
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  );
+                })()
               )}
             </div>
 
@@ -414,51 +454,86 @@ export default function SeasonManage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-4">
-                {fixtures.map((fixture) => (
-                  <Card key={fixture.id}>
-                    <CardContent className="py-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <p className="font-semibold">{fixture.home_team.name}</p>
-                          <p className="font-semibold">{fixture.away_team.name}</p>
-                          <p className="text-sm text-muted-foreground mt-2">
-                            {new Date(fixture.match_date).toLocaleString()}
-                          </p>
-                        </div>
-                        <div className="flex gap-2 items-center">
-                          <Input
-                            type="number"
-                            min="0"
-                            placeholder="0"
-                            defaultValue={fixture.results?.[0]?.home_goals || ""}
-                            className="w-16 text-center"
-                            id={`home-${fixture.id}`}
-                          />
-                          <span className="font-bold">-</span>
-                          <Input
-                            type="number"
-                            min="0"
-                            placeholder="0"
-                            defaultValue={fixture.results?.[0]?.away_goals || ""}
-                            className="w-16 text-center"
-                            id={`away-${fixture.id}`}
-                          />
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              const homeInput = document.getElementById(`home-${fixture.id}`) as HTMLInputElement;
-                              const awayInput = document.getElementById(`away-${fixture.id}`) as HTMLInputElement;
-                              updateResult(fixture.id, parseInt(homeInput.value) || 0, parseInt(awayInput.value) || 0);
-                            }}
-                          >
-                            Save
-                          </Button>
-                        </div>
+              <div className="space-y-6">
+                {Array.from(new Set(fixtures.map(f => f.round || 1))).sort((a, b) => a - b).map((round) => {
+                  const roundFixtures = fixtures.filter(f => (f.round || 1) === round);
+                  const allComplete = roundFixtures.every(f => f.status === "completed");
+
+                  return (
+                    <div key={round} className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-bold">Round {round}</h3>
+                        {allComplete && (
+                          <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                            Complete
+                          </span>
+                        )}
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      
+                      {roundFixtures.map((fixture) => {
+                        const isCompleted = fixture.status === "completed";
+                        
+                        return (
+                          <Card key={fixture.id} className={isCompleted ? "border-primary/20 bg-muted/30" : ""}>
+                            <CardContent className="py-4">
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div className="flex-1">
+                                  <p className="font-semibold text-sm sm:text-base">{fixture.home_team.name}</p>
+                                  <p className="font-semibold text-sm sm:text-base">{fixture.away_team.name}</p>
+                                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                                    {new Date(fixture.match_date).toLocaleString()}
+                                  </p>
+                                </div>
+                                
+                                {isCompleted ? (
+                                  <div className="flex items-center gap-3 sm:gap-4">
+                                    <div className="text-right">
+                                      <div className="text-xl sm:text-2xl font-bold">{fixture.results?.[0]?.home_goals}</div>
+                                      <div className="text-xl sm:text-2xl font-bold">{fixture.results?.[0]?.away_goals}</div>
+                                    </div>
+                                    <div className="text-xs bg-primary/10 text-primary px-2 py-1 rounded whitespace-nowrap">
+                                      Final
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex gap-2 items-center flex-wrap sm:flex-nowrap">
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      placeholder="0"
+                                      defaultValue={fixture.results?.[0]?.home_goals || ""}
+                                      className="w-14 sm:w-16 text-center text-sm"
+                                      id={`home-${fixture.id}`}
+                                    />
+                                    <span className="font-bold">-</span>
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      placeholder="0"
+                                      defaultValue={fixture.results?.[0]?.away_goals || ""}
+                                      className="w-14 sm:w-16 text-center text-sm"
+                                      id={`away-${fixture.id}`}
+                                    />
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        const homeInput = document.getElementById(`home-${fixture.id}`) as HTMLInputElement;
+                                        const awayInput = document.getElementById(`away-${fixture.id}`) as HTMLInputElement;
+                                        updateResult(fixture.id, parseInt(homeInput.value) || 0, parseInt(awayInput.value) || 0);
+                                      }}
+                                    >
+                                      Save
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </TabsContent>

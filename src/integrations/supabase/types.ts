@@ -21,6 +21,7 @@ export type Database = {
           home_team_id: string
           id: string
           match_date: string
+          round: number
           season_id: string
           status: string
           updated_at: string
@@ -31,6 +32,7 @@ export type Database = {
           home_team_id: string
           id?: string
           match_date: string
+          round?: number
           season_id: string
           status?: string
           updated_at?: string
@@ -41,6 +43,7 @@ export type Database = {
           home_team_id?: string
           id?: string
           match_date?: string
+          round?: number
           season_id?: string
           status?: string
           updated_at?: string
