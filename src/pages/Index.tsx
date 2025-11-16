@@ -1,12 +1,13 @@
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Users, Calendar, BarChart3, Share2, Zap } from "lucide-react";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       
       {/* Hero Section */}
@@ -124,6 +125,7 @@ const Index = () => {
           </CardContent>
         </Card>
       </section>
+      <Footer />
     </div>
   );
 };

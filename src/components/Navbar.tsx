@@ -37,6 +37,9 @@ export function Navbar({ isPublic = false }: NavbarProps) {
                   <Link to="/about">
                     <Button variant="ghost">About</Button>
                   </Link>
+                  <Link to="/contact">
+                    <Button variant="ghost">Contact</Button>
+                  </Link>
                   {user ? (
                     <>
                       <Link to="/dashboard">
@@ -64,6 +67,9 @@ export function Navbar({ isPublic = false }: NavbarProps) {
                     <div className="flex flex-col gap-4 mt-8">
                       <Link to="/about" onClick={() => setMobileMenuOpen(false)}>
                         <Button variant="ghost" className="w-full justify-start">About</Button>
+                      </Link>
+                      <Link to="/contact" onClick={() => setMobileMenuOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start">Contact</Button>
                       </Link>
                       {user ? (
                         <>

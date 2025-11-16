@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { StandingsTable } from "@/components/StandingsTable";
 import { FixturesView } from "@/components/FixturesView";
 import { Card, CardContent } from "@/components/ui/card";
@@ -212,32 +213,34 @@ export default function PublicLeague() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
         <Navbar />
-        <div className="flex items-center justify-center py-16">
+        <div className="flex items-center justify-center py-16 flex-grow">
           <div className="h-32 w-32 animate-spin rounded-full border-b-2 border-primary"></div>
         </div>
+        <Footer />
       </div>
     );
   }
 
   if (!league) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
         <Navbar />
-        <div className="container mx-auto px-4 py-16 text-center">
+        <div className="container mx-auto px-4 py-16 text-center flex-grow">
           <Trophy className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
           <h1 className="text-2xl font-bold mb-2">League not found</h1>
           <p className="text-muted-foreground">This league doesn't exist or has been removed</p>
         </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar isPublic={true} />
-      <div className="container mx-auto px-4 py-4 sm:py-8">
+      <div className="container mx-auto px-4 py-4 sm:py-8 flex-grow">
         <div className="text-center mb-6 sm:mb-8">
           <Trophy className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-3 sm:mb-4 text-primary" />
           <h1 className="text-2xl sm:text-4xl font-bold mb-2">{league.name}</h1>
@@ -291,6 +294,7 @@ export default function PublicLeague() {
           </Tabs>
         )}
       </div>
+      <Footer />
     </div>
   );
 }
