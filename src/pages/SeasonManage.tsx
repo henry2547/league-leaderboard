@@ -195,12 +195,17 @@ export default function SeasonManage() {
       const totalRounds = totalTeams - 1; // First leg only
       const matchesPerRound = totalTeams / 2;
       const startDate = new Date(season.start_date);
+      const endDate = new Date(season.end_date);
       const allFixtures: any[] = [];
+      
+      // Calculate total duration and interval between rounds
+      const totalDurationMs = endDate.getTime() - startDate.getTime();
+      const totalAllRounds = totalRounds * 2; // First leg + second leg
+      const intervalMs = totalDurationMs / totalAllRounds;
       
       // Generate all first leg rounds
       for (let round = 1; round <= totalRounds; round++) {
-        const roundDate = new Date(startDate);
-        roundDate.setDate(roundDate.getDate() + (round - 1) * 7);
+        const roundDate = new Date(startDate.getTime() + (round - 1) * intervalMs);
         
         // Generate fixtures for this round using round-robin algorithm
         for (let matchIndex = 0; matchIndex < matchesPerRound; matchIndex++) {
@@ -303,13 +308,18 @@ export default function SeasonManage() {
       }
 
       const startDate = new Date(season.start_date);
+      const endDate = new Date(season.end_date);
       const allSecondLegFixtures: any[] = [];
+
+      // Calculate interval between rounds based on season duration
+      const totalDurationMs = endDate.getTime() - startDate.getTime();
+      const totalAllRounds = totalFirstLegRounds * 2; // First leg + second leg
+      const intervalMs = totalDurationMs / totalAllRounds;
 
       // Generate second leg by reversing home/away from first leg
       firstLegFixtures.forEach((fixture) => {
         const roundOffset = totalFirstLegRounds + fixture.round;
-        const matchDate = new Date(startDate);
-        matchDate.setDate(matchDate.getDate() + (roundOffset - 1) * 7);
+        const matchDate = new Date(startDate.getTime() + (roundOffset - 1) * intervalMs);
 
         allSecondLegFixtures.push({
           season_id: id,
