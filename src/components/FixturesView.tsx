@@ -19,6 +19,18 @@ interface FixturesViewProps {
 }
 
 export function FixturesView({ title, fixtures, emptyMessage = "No matches scheduled" }: FixturesViewProps) {
+  // Group fixtures by round
+  const fixturesByRound = fixtures.reduce((acc, fixture) => {
+    const round = (fixture as any).round || 1;
+    if (!acc[round]) {
+      acc[round] = [];
+    }
+    acc[round].push(fixture);
+    return acc;
+  }, {} as Record<number, Fixture[]>);
+
+  const sortedRounds = Object.keys(fixturesByRound).map(Number).sort((a, b) => a - b);
+
   return (
     <Card>
       <CardHeader>
@@ -31,8 +43,13 @@ export function FixturesView({ title, fixtures, emptyMessage = "No matches sched
         {fixtures.length === 0 ? (
           <p className="text-center text-muted-foreground py-8 text-sm sm:text-base">{emptyMessage}</p>
         ) : (
-          <div className="space-y-3 sm:space-y-4">
-            {fixtures.map((fixture) => (
+          <div className="space-y-6 sm:space-y-8">
+            {sortedRounds.map((round) => (
+              <div key={round} className="space-y-3 sm:space-y-4">
+                <h3 className="text-lg sm:text-xl font-bold text-primary border-b pb-2">
+                  Round {round}
+                </h3>
+                {fixturesByRound[round].map((fixture) => (
               <div
                 key={fixture.id}
                 className="relative overflow-hidden rounded-xl border bg-gradient-to-br from-card to-card/50 hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
@@ -100,6 +117,8 @@ export function FixturesView({ title, fixtures, emptyMessage = "No matches sched
                 {fixture.status === "live" && (
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-destructive via-primary to-destructive animate-pulse" />
                 )}
+              </div>
+                ))}
               </div>
             ))}
           </div>
