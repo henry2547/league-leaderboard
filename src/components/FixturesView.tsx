@@ -1,6 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface Fixture {
   id: string;
@@ -43,85 +49,89 @@ export function FixturesView({ title, fixtures, emptyMessage = "No matches sched
         {fixtures.length === 0 ? (
           <p className="text-center text-muted-foreground py-8 text-sm sm:text-base">{emptyMessage}</p>
         ) : (
-          <div className="space-y-6 sm:space-y-8">
+          <Accordion type="multiple" className="w-full">
             {sortedRounds.map((round) => (
-              <div key={round} className="space-y-3 sm:space-y-4">
-                <h3 className="text-lg sm:text-xl font-bold text-primary border-b pb-2">
-                  Round {round}
-                </h3>
-                {fixturesByRound[round].map((fixture) => (
-              <div
-                key={fixture.id}
-                className="relative overflow-hidden rounded-xl border bg-gradient-to-br from-card to-card/50 hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
-              >
-                <div className="p-4 sm:p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <Badge
-                      className="text-xs font-semibold"
-                      variant={
-                        fixture.status === "live"
-                          ? "destructive"
-                          : fixture.status === "completed"
-                          ? "secondary"
-                          : "outline"
-                      }
-                    >
-                      {fixture.status === "live" && "🔴 LIVE"}
-                      {fixture.status === "completed" && "✓ FINAL"}
-                      {fixture.status === "scheduled" && "⏰ SCHEDULED"}
-                    </Badge>
-                    <span className="text-xs sm:text-sm text-muted-foreground font-medium">
-                      {format(fixture.date, "MMM d, HH:mm")}
-                    </span>
+              <AccordionItem key={round} value={`round-${round}`}>
+                <AccordionTrigger className="text-lg sm:text-xl font-bold text-primary hover:no-underline">
+                  Leg {round} ({fixturesByRound[round].length} matches)
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-3 sm:space-y-4 pt-2">
+                    {fixturesByRound[round].map((fixture) => (
+                      <div
+                        key={fixture.id}
+                        className="relative overflow-hidden rounded-xl border bg-gradient-to-br from-card to-card/50 hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
+                      >
+                        <div className="p-4 sm:p-6">
+                          <div className="flex items-center justify-between mb-4">
+                            <Badge
+                              className="text-xs font-semibold"
+                              variant={
+                                fixture.status === "live"
+                                  ? "destructive"
+                                  : fixture.status === "completed"
+                                  ? "secondary"
+                                  : "outline"
+                              }
+                            >
+                              {fixture.status === "live" && "🔴 LIVE"}
+                              {fixture.status === "completed" && "✓ FINAL"}
+                              {fixture.status === "scheduled" && "⏰ SCHEDULED"}
+                            </Badge>
+                            <span className="text-xs sm:text-sm text-muted-foreground font-medium">
+                              {format(fixture.date, "MMM d, HH:mm")}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-center gap-4 sm:gap-8">
+                            {/* Home Team */}
+                            <div className="flex-1 text-right">
+                              <h3 className="font-bold text-base sm:text-xl mb-2 text-foreground">
+                                {fixture.homeTeam}
+                              </h3>
+                              {fixture.status === "completed" && fixture.homeGoals !== undefined && (
+                                <div className="text-3xl sm:text-5xl font-black text-primary">
+                                  {fixture.homeGoals}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* VS or Score Separator */}
+                            <div className="flex flex-col items-center justify-center px-2 sm:px-4">
+                              {fixture.status === "completed" ? (
+                                <div className="text-xl sm:text-2xl font-bold text-muted-foreground">-</div>
+                              ) : (
+                                <div className="text-sm sm:text-base font-semibold text-muted-foreground px-3 py-1 rounded-full bg-muted">
+                                  VS
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Away Team */}
+                            <div className="flex-1 text-left">
+                              <h3 className="font-bold text-base sm:text-xl mb-2 text-foreground">
+                                {fixture.awayTeam}
+                              </h3>
+                              {fixture.status === "completed" && fixture.awayGoals !== undefined && (
+                                <div className="text-3xl sm:text-5xl font-black text-primary">
+                                  {fixture.awayGoals}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Decorative accent line */}
+                        {fixture.status === "live" && (
+                          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-destructive via-primary to-destructive animate-pulse" />
+                        )}
+                      </div>
+                    ))}
                   </div>
-
-                  <div className="flex items-center justify-center gap-4 sm:gap-8">
-                    {/* Home Team */}
-                    <div className="flex-1 text-right">
-                      <h3 className="font-bold text-base sm:text-xl mb-2 text-foreground">
-                        {fixture.homeTeam}
-                      </h3>
-                      {fixture.status === "completed" && fixture.homeGoals !== undefined && (
-                        <div className="text-3xl sm:text-5xl font-black text-primary">
-                          {fixture.homeGoals}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* VS or Score Separator */}
-                    <div className="flex flex-col items-center justify-center px-2 sm:px-4">
-                      {fixture.status === "completed" ? (
-                        <div className="text-xl sm:text-2xl font-bold text-muted-foreground">-</div>
-                      ) : (
-                        <div className="text-sm sm:text-base font-semibold text-muted-foreground px-3 py-1 rounded-full bg-muted">
-                          VS
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Away Team */}
-                    <div className="flex-1 text-left">
-                      <h3 className="font-bold text-base sm:text-xl mb-2 text-foreground">
-                        {fixture.awayTeam}
-                      </h3>
-                      {fixture.status === "completed" && fixture.awayGoals !== undefined && (
-                        <div className="text-3xl sm:text-5xl font-black text-primary">
-                          {fixture.awayGoals}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Decorative accent line */}
-                {fixture.status === "live" && (
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-destructive via-primary to-destructive animate-pulse" />
-                )}
-              </div>
-                ))}
-              </div>
+                </AccordionContent>
+              </AccordionItem>
             ))}
-          </div>
+          </Accordion>
         )}
       </CardContent>
     </Card>
