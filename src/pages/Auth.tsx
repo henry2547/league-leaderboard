@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { Trophy, Eye, EyeOff } from "lucide-react";
 
 export default function Auth() {
@@ -69,9 +70,9 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-16 flex-grow">
         <div className="flex flex-col items-center gap-8">
           <div className="text-center">
             <Trophy className="h-16 w-16 mx-auto mb-4 text-primary" />
@@ -206,6 +207,7 @@ export default function Auth() {
           </Card>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

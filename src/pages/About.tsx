@@ -1,20 +1,46 @@
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy, Users, Calendar, BarChart3 } from "lucide-react";
+import { Trophy, Users, Calendar, BarChart3, Code2 } from "lucide-react";
 
 export default function About() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-16 flex-grow">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <Trophy className="h-16 w-16 mx-auto mb-4 text-primary" />
-            <h1 className="text-4xl font-bold mb-4">About LeagueManager</h1>
+            <h1 className="text-4xl font-bold mb-4">About Play Kenya</h1>
             <p className="text-xl text-muted-foreground">
               The ultimate platform for organizing and managing championship leagues
             </p>
           </div>
+
+          <Card className="mb-8">
+            <CardHeader>
+              <Code2 className="h-10 w-10 mb-2 text-primary" />
+              <CardTitle>About the Developer</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h3 className="text-2xl font-bold mb-2">✨ Henry Muchiri</h3>
+                <p className="text-lg text-primary mb-4">
+                  Junior Software Developer | Tech Enthusiast | Problem Solver
+                </p>
+                <p className="text-muted-foreground mb-4">
+                  Crafting digital solutions with clean code & creative thinking
+                </p>
+              </div>
+              <div className="space-y-2 text-muted-foreground">
+                <p>📍 Based in Kirinyaga County, Kenya</p>
+                <p>🌱 Currently growing my skills in: Backend Development • Cloud Technologies • Open-Source</p>
+              </div>
+              <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground">
+                "Turning complex problems into elegant solutions – one line of code at a time."
+              </blockquote>
+            </CardContent>
+          </Card>
 
           <div className="grid md:grid-cols-2 gap-6 mb-12">
             <Card>
@@ -152,6 +178,7 @@ export default function About() {
           </Card>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
