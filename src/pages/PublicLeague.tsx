@@ -189,6 +189,7 @@ export default function PublicLeague() {
         status: f.status,
         homeGoals: f.results?.[0]?.home_goals,
         awayGoals: f.results?.[0]?.away_goals,
+        round: f.round,
       })) || [];
 
       setTodayFixtures(todayMatches);

@@ -83,23 +83,30 @@ export function FixturesView({ title, fixtures, emptyMessage = "No matches sched
                             </span>
                           </div>
 
-                          <div className="flex items-center justify-center gap-4 sm:gap-8">
+                          <div className="flex items-center justify-between gap-4">
                             {/* Home Team */}
                             <div className="flex-1 text-right">
-                              <h3 className="font-bold text-base sm:text-xl mb-2 text-foreground">
+                              <h3 className="font-bold text-lg sm:text-2xl text-foreground">
                                 {fixture.homeTeam}
                               </h3>
-                              {fixture.status === "completed" && fixture.homeGoals !== undefined && (
-                                <div className="text-3xl sm:text-5xl font-black text-primary">
-                                  {fixture.homeGoals}
-                                </div>
-                              )}
                             </div>
 
-                            {/* VS or Score Separator */}
-                            <div className="flex flex-col items-center justify-center px-2 sm:px-4">
-                              {fixture.status === "completed" ? (
-                                <div className="text-xl sm:text-2xl font-bold text-muted-foreground">-</div>
+                            {/* Score Display */}
+                            <div className="flex items-center justify-center min-w-[100px] sm:min-w-[140px]">
+                              {fixture.status === "completed" && 
+                               fixture.homeGoals !== undefined && 
+                               fixture.awayGoals !== undefined ? (
+                                <div className="bg-primary/10 rounded-lg px-4 sm:px-6 py-2 sm:py-3">
+                                  <div className="flex items-center gap-2 sm:gap-3">
+                                    <span className="text-2xl sm:text-4xl font-black text-foreground">
+                                      {fixture.homeGoals}
+                                    </span>
+                                    <span className="text-xl sm:text-3xl font-bold text-muted-foreground">:</span>
+                                    <span className="text-2xl sm:text-4xl font-black text-foreground">
+                                      {fixture.awayGoals}
+                                    </span>
+                                  </div>
+                                </div>
                               ) : (
                                 <div className="text-sm sm:text-base font-semibold text-muted-foreground px-3 py-1 rounded-full bg-muted">
                                   VS
@@ -109,14 +116,9 @@ export function FixturesView({ title, fixtures, emptyMessage = "No matches sched
 
                             {/* Away Team */}
                             <div className="flex-1 text-left">
-                              <h3 className="font-bold text-base sm:text-xl mb-2 text-foreground">
+                              <h3 className="font-bold text-lg sm:text-2xl text-foreground">
                                 {fixture.awayTeam}
                               </h3>
-                              {fixture.status === "completed" && fixture.awayGoals !== undefined && (
-                                <div className="text-3xl sm:text-5xl font-black text-primary">
-                                  {fixture.awayGoals}
-                                </div>
-                              )}
                             </div>
                           </div>
                         </div>
