@@ -26,6 +26,7 @@ export default function SeasonManage() {
   const [newTeamName, setNewTeamName] = useState("");
   const [generating, setGenerating] = useState(false);
   const [currentRound, setCurrentRound] = useState(1);
+  const [totalFirstLegRounds, setTotalFirstLegRounds] = useState(0);
 
   useEffect(() => {
     if (!user) {
@@ -82,9 +83,14 @@ export default function SeasonManage() {
       if (fixturesError) throw fixturesError;
       setFixtures(fixturesData || []);
       
-      // Calculate current round
+      // Calculate current round and total first leg rounds
       const maxRound = fixturesData?.reduce((max, f) => Math.max(max, f.round || 1), 0) || 0;
       setCurrentRound(maxRound);
+      
+      // Calculate total rounds for first leg
+      const numTeams = teamsData?.length || 0;
+      const totalRounds = numTeams % 2 === 0 ? numTeams - 1 : numTeams;
+      setTotalFirstLegRounds(totalRounds);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -147,7 +153,7 @@ export default function SeasonManage() {
     }
   };
 
-  const generateFixtures = async (round = 1) => {
+  const generateFirstLeg = async () => {
     if (teams.length < 2) {
       toast({
         variant: "destructive",
@@ -159,18 +165,17 @@ export default function SeasonManage() {
 
     setGenerating(true);
     try {
-      // Check if fixtures already exist for this round
+      // Check if any fixtures already exist
       const { data: existingFixtures } = await supabase
         .from("fixtures")
         .select("id")
-        .eq("season_id", id)
-        .eq("round", round);
+        .eq("season_id", id);
 
       if (existingFixtures && existingFixtures.length > 0) {
         toast({
           variant: "destructive",
           title: "Fixtures already exist",
-          description: `Round ${round} fixtures have already been generated.`,
+          description: "First leg fixtures have already been generated.",
         });
         setGenerating(false);
         return;
@@ -187,72 +192,52 @@ export default function SeasonManage() {
       }
 
       const totalTeams = teamList.length;
-      const totalRounds = (totalTeams - 1) * 2; // Each team plays each other twice (home & away)
-      
-      if (round > totalRounds) {
-        toast({
-          variant: "destructive",
-          title: "All rounds completed",
-          description: "All fixture rounds have been generated",
-        });
-        setGenerating(false);
-        return;
-      }
-
+      const totalRounds = totalTeams - 1; // First leg only
       const matchesPerRound = totalTeams / 2;
       const startDate = new Date(season.start_date);
-      const roundFixtures: any[] = [];
+      const allFixtures: any[] = [];
       
-      // Determine if this is second half of season (reverse fixtures)
-      const isSecondHalf = round > (totalTeams - 1);
-      const actualRound = isSecondHalf ? round - (totalTeams - 1) : round;
-      
-      // Calculate match date (one week per round)
-      const roundDate = new Date(startDate);
-      roundDate.setDate(roundDate.getDate() + (round - 1) * 7);
-      
-      // Generate fixtures for this round using round-robin algorithm
-      for (let matchIndex = 0; matchIndex < matchesPerRound; matchIndex++) {
-        let homeIndex, awayIndex;
+      // Generate all first leg rounds
+      for (let round = 1; round <= totalRounds; round++) {
+        const roundDate = new Date(startDate);
+        roundDate.setDate(roundDate.getDate() + (round - 1) * 7);
         
-        if (matchIndex === 0) {
-          // First team stays fixed
-          homeIndex = 0;
-          awayIndex = actualRound;
-        } else {
-          // Other teams rotate
-          homeIndex = ((actualRound - matchIndex) + totalTeams - 1) % (totalTeams - 1) + 1;
-          awayIndex = ((actualRound + matchIndex - 1) % (totalTeams - 1)) + 1;
-        }
-        
-        let homeTeam = teamList[homeIndex];
-        let awayTeam = teamList[awayIndex];
-        
-        // Reverse home and away for second half of season
-        if (isSecondHalf) {
-          [homeTeam, awayTeam] = [awayTeam, homeTeam];
-        }
-        
-        // Skip if bye team
-        if (homeTeam.id !== "bye" && awayTeam.id !== "bye") {
-          roundFixtures.push({
-            season_id: id,
-            home_team_id: homeTeam.id,
-            away_team_id: awayTeam.id,
-            match_date: roundDate.toISOString(),
-            round: round,
-            status: "scheduled",
-          });
+        // Generate fixtures for this round using round-robin algorithm
+        for (let matchIndex = 0; matchIndex < matchesPerRound; matchIndex++) {
+          let homeIndex, awayIndex;
+          
+          if (matchIndex === 0) {
+            homeIndex = 0;
+            awayIndex = round;
+          } else {
+            homeIndex = ((round - matchIndex) + totalTeams - 1) % (totalTeams - 1) + 1;
+            awayIndex = ((round + matchIndex - 1) % (totalTeams - 1)) + 1;
+          }
+          
+          const homeTeam = teamList[homeIndex];
+          const awayTeam = teamList[awayIndex];
+          
+          // Skip if bye team
+          if (homeTeam.id !== "bye" && awayTeam.id !== "bye") {
+            allFixtures.push({
+              season_id: id,
+              home_team_id: homeTeam.id,
+              away_team_id: awayTeam.id,
+              match_date: roundDate.toISOString(),
+              round: round,
+              status: "scheduled",
+            });
+          }
         }
       }
 
-      const { error } = await supabase.from("fixtures").insert(roundFixtures);
+      const { error } = await supabase.from("fixtures").insert(allFixtures);
 
       if (error) throw error;
 
       toast({
-        title: "Fixtures generated!",
-        description: `Round ${round} fixtures created (${roundFixtures.length} matches). ${isSecondHalf ? 'Return fixtures' : 'First leg'}.`,
+        title: "First leg generated!",
+        description: `All ${totalRounds} rounds of first leg fixtures created (${allFixtures.length} matches total).`,
       });
 
       setFixtureDialogOpen(false);
@@ -261,6 +246,96 @@ export default function SeasonManage() {
       toast({
         variant: "destructive",
         title: "Error generating fixtures",
+        description: error.message,
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const generateSecondLeg = async () => {
+    setGenerating(true);
+    try {
+      // Get all first leg fixtures
+      const { data: firstLegFixtures } = await supabase
+        .from("fixtures")
+        .select("*")
+        .eq("season_id", id)
+        .lte("round", totalFirstLegRounds);
+
+      if (!firstLegFixtures || firstLegFixtures.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "No first leg fixtures",
+          description: "Generate first leg fixtures before creating second leg.",
+        });
+        setGenerating(false);
+        return;
+      }
+
+      // Check if all first leg fixtures are completed
+      const allCompleted = firstLegFixtures.every(f => f.status === "completed");
+      if (!allCompleted) {
+        toast({
+          variant: "destructive",
+          title: "First leg not completed",
+          description: "Complete all first leg matches before generating second leg.",
+        });
+        setGenerating(false);
+        return;
+      }
+
+      // Check if second leg already exists
+      const { data: existingSecondLeg } = await supabase
+        .from("fixtures")
+        .select("id")
+        .eq("season_id", id)
+        .gt("round", totalFirstLegRounds);
+
+      if (existingSecondLeg && existingSecondLeg.length > 0) {
+        toast({
+          variant: "destructive",
+          title: "Second leg already exists",
+          description: "Second leg fixtures have already been generated.",
+        });
+        setGenerating(false);
+        return;
+      }
+
+      const startDate = new Date(season.start_date);
+      const allSecondLegFixtures: any[] = [];
+
+      // Generate second leg by reversing home/away from first leg
+      firstLegFixtures.forEach((fixture) => {
+        const roundOffset = totalFirstLegRounds + fixture.round;
+        const matchDate = new Date(startDate);
+        matchDate.setDate(matchDate.getDate() + (roundOffset - 1) * 7);
+
+        allSecondLegFixtures.push({
+          season_id: id,
+          home_team_id: fixture.away_team_id, // Reversed
+          away_team_id: fixture.home_team_id, // Reversed
+          match_date: matchDate.toISOString(),
+          round: roundOffset,
+          status: "scheduled",
+        });
+      });
+
+      const { error } = await supabase.from("fixtures").insert(allSecondLegFixtures);
+
+      if (error) throw error;
+
+      toast({
+        title: "Second leg generated!",
+        description: `All ${totalFirstLegRounds} rounds of return fixtures created (${allSecondLegFixtures.length} matches total).`,
+      });
+
+      setFixtureDialogOpen(false);
+      fetchSeasonData();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error generating second leg",
         description: error.message,
       });
     } finally {
@@ -424,58 +499,66 @@ export default function SeasonManage() {
             <div className="flex justify-between items-center mb-4">
               <div>
                 <h2 className="text-2xl font-bold">Fixtures</h2>
-                {currentRound > 0 && <p className="text-sm text-muted-foreground">Current Round: {currentRound}</p>}
+                {currentRound > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    {currentRound <= totalFirstLegRounds ? "First Leg" : "Second Leg"} - Round: {currentRound}
+                  </p>
+                )}
               </div>
               {fixtures.length === 0 ? (
                 <Dialog open={fixtureDialogOpen} onOpenChange={setFixtureDialogOpen}>
                   <DialogTrigger asChild>
                     <Button className="gap-2" disabled={teams.length < 2}>
                       <CalendarIcon className="h-5 w-5" />
-                      Generate Round 1
+                      Generate First Leg
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Generate First Round</DialogTitle>
+                      <DialogTitle>Generate First Leg Fixtures</DialogTitle>
                       <DialogDescription>
-                        This will create the first round of fixtures
+                        This will create all first leg fixtures where each team plays every other team once
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
-                      <p>Generate Round 1 fixtures for {teams.length} teams?</p>
-                      <Button onClick={() => generateFixtures(1)} className="w-full" disabled={generating}>
-                        {generating ? "Generating..." : "Generate Round 1"}
+                      <p>Generate all first leg fixtures for {teams.length} teams?</p>
+                      <p className="text-sm text-muted-foreground">
+                        This will create {totalFirstLegRounds} rounds of fixtures.
+                      </p>
+                      <Button onClick={generateFirstLeg} className="w-full" disabled={generating}>
+                        {generating ? "Generating..." : "Generate First Leg"}
                       </Button>
                     </div>
                   </DialogContent>
                 </Dialog>
               ) : (
                 (() => {
-                  const currentRoundFixtures = fixtures.filter(f => f.round === currentRound);
-                  const allCurrentRoundComplete = currentRoundFixtures.every(f => f.status === "completed");
-                  const numTeams = teams.length;
-                  const totalRounds = numTeams % 2 === 0 ? numTeams - 1 : numTeams;
-                  const hasMoreRounds = currentRound < totalRounds;
+                  const firstLegFixtures = fixtures.filter(f => f.round <= totalFirstLegRounds);
+                  const allFirstLegComplete = firstLegFixtures.every(f => f.status === "completed");
+                  const hasSecondLeg = fixtures.some(f => f.round > totalFirstLegRounds);
 
-                  return allCurrentRoundComplete && hasMoreRounds && (
+                  return allFirstLegComplete && !hasSecondLeg && (
                     <Dialog open={fixtureDialogOpen} onOpenChange={setFixtureDialogOpen}>
                       <DialogTrigger asChild>
                         <Button className="gap-2">
                           <CalendarIcon className="h-5 w-5" />
-                          Generate Round {currentRound + 1}
+                          Generate Second Leg
                         </Button>
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>Generate Next Round</DialogTitle>
+                          <DialogTitle>Generate Second Leg Fixtures</DialogTitle>
                           <DialogDescription>
-                            Round {currentRound} is complete. Generate the next round?
+                            First leg is complete! Generate return fixtures where home and away teams are reversed.
                           </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4">
-                          <p>Generate Round {currentRound + 1} fixtures?</p>
-                          <Button onClick={() => generateFixtures(currentRound + 1)} className="w-full" disabled={generating}>
-                            {generating ? "Generating..." : `Generate Round ${currentRound + 1}`}
+                          <p>Generate all second leg fixtures (return matches)?</p>
+                          <p className="text-sm text-muted-foreground">
+                            This will create {totalFirstLegRounds} rounds of return fixtures.
+                          </p>
+                          <Button onClick={generateSecondLeg} className="w-full" disabled={generating}>
+                            {generating ? "Generating..." : "Generate Second Leg"}
                           </Button>
                         </div>
                       </DialogContent>
@@ -507,11 +590,14 @@ export default function SeasonManage() {
                 {Array.from(new Set(fixtures.map(f => f.round || 1))).sort((a, b) => a - b).map((round) => {
                   const roundFixtures = fixtures.filter(f => (f.round || 1) === round);
                   const allComplete = roundFixtures.every(f => f.status === "completed");
+                  const isSecondLeg = round > totalFirstLegRounds;
 
                   return (
                     <div key={round} className="space-y-3">
                       <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-bold">Round {round}</h3>
+                        <h3 className="text-lg font-bold">
+                          Round {round} {isSecondLeg && <span className="text-sm text-muted-foreground">(Second Leg)</span>}
+                        </h3>
                         {allComplete && (
                           <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
                             Complete
