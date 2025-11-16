@@ -17,6 +17,7 @@ export default function PublicLeague() {
   const [standings, setStandings] = useState<any[]>([]);
   const [todayFixtures, setTodayFixtures] = useState<any[]>([]);
   const [upcomingFixtures, setUpcomingFixtures] = useState<any[]>([]);
+  const [completedFixtures, setCompletedFixtures] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -178,8 +179,21 @@ export default function PublicLeague() {
         status: f.status,
       })) || [];
 
+      const completedMatches = fixturesData?.filter(f => 
+        f.status === "completed"
+      ).map(f => ({
+        id: f.id,
+        homeTeam: f.home_team.name,
+        awayTeam: f.away_team.name,
+        date: new Date(f.match_date),
+        status: f.status,
+        homeGoals: f.results?.[0]?.home_goals,
+        awayGoals: f.results?.[0]?.away_goals,
+      })) || [];
+
       setTodayFixtures(todayMatches);
       setUpcomingFixtures(upcomingMatches);
+      setCompletedFixtures(completedMatches);
     } catch (error: any) {
       console.error("Error fetching season data:", error);
     }
@@ -229,14 +243,23 @@ export default function PublicLeague() {
           </Card>
         ) : (
           <Tabs defaultValue="standings" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 h-auto">
+            <TabsList className="grid w-full grid-cols-4 h-auto">
               <TabsTrigger value="standings" className="text-xs sm:text-sm">Standings</TabsTrigger>
+              <TabsTrigger value="results" className="text-xs sm:text-sm">Results</TabsTrigger>
               <TabsTrigger value="today" className="text-xs sm:text-sm">Today</TabsTrigger>
               <TabsTrigger value="upcoming" className="text-xs sm:text-sm">Upcoming</TabsTrigger>
             </TabsList>
 
             <TabsContent value="standings" className="space-y-4">
               <StandingsTable standings={standings} />
+            </TabsContent>
+
+            <TabsContent value="results" className="space-y-4">
+              <FixturesView
+                title="Match Results"
+                fixtures={completedFixtures}
+                emptyMessage="No completed matches yet"
+              />
             </TabsContent>
 
             <TabsContent value="today" className="space-y-4">
