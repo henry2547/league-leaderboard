@@ -60,6 +60,7 @@ export default function LeagueManage() {
         .from("seasons")
         .select("*")
         .eq("league_id", id)
+        .order("is_active", { ascending: false })
         .order("created_at", { ascending: false });
 
       if (seasonsError) throw seasonsError;
@@ -79,12 +80,20 @@ export default function LeagueManage() {
     e.preventDefault();
     
     try {
+      // First, set all existing seasons to inactive
+      await supabase
+        .from("seasons")
+        .update({ is_active: false })
+        .eq("league_id", id);
+
+      // Then create the new season as active
       const { error } = await supabase.from("seasons").insert([
         {
           league_id: id,
           name: newSeason.name,
           start_date: newSeason.startDate,
           end_date: newSeason.endDate,
+          is_active: true,
         },
       ]);
 
@@ -92,7 +101,7 @@ export default function LeagueManage() {
 
       toast({
         title: "Season created!",
-        description: "Your new season has been created successfully.",
+        description: "Your new season is now active. Previous seasons have been archived.",
       });
 
       setNewSeason({ name: "", startDate: "", endDate: "" });
@@ -245,9 +254,16 @@ export default function LeagueManage() {
                     onClick={() => navigate(`/season/${season.id}/manage`)}
                   >
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Trophy className="h-5 w-5 text-primary" />
-                        {season.name}
+                      <CardTitle className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <Trophy className="h-5 w-5 text-primary" />
+                          {season.name}
+                        </div>
+                        {season.is_active && (
+                          <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                            Active
+                          </span>
+                        )}
                       </CardTitle>
                       <CardDescription>
                         {new Date(season.start_date).toLocaleDateString()} -{" "}
