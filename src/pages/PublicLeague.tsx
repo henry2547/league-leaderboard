@@ -30,9 +30,10 @@ export default function PublicLeague() {
         .from("leagues")
         .select("*")
         .eq("public_link_id", publicId)
-        .single();
+        .maybeSingle();
 
       if (leagueError) throw leagueError;
+      if (!leagueData) throw new Error("League not found");
       setLeague(leagueData);
 
       const { data: seasonsData, error: seasonsError } = await supabase
@@ -88,6 +89,8 @@ export default function PublicLeague() {
           )
         `)
         .eq("fixtures.season_id", seasonId);
+
+      const resultsByFixture = new Map((resultsData || []).map((r: any) => [r.fixture_id, r]));
 
       // Calculate standings
       const teamStats = new Map();
@@ -158,15 +161,19 @@ export default function PublicLeague() {
       const todayMatches = fixturesData?.filter(f => {
         const matchDate = new Date(f.match_date);
         return matchDate >= today && matchDate < tomorrow;
-      }).map(f => ({
-        id: f.id,
-        homeTeam: f.home_team.name,
-        awayTeam: f.away_team.name,
-        date: new Date(f.match_date),
-        status: f.status,
-        homeGoals: f.results?.[0]?.home_goals,
-        awayGoals: f.results?.[0]?.away_goals,
-      })) || [];
+      }).map(f => {
+        const res = resultsByFixture.get(f.id);
+        return {
+          id: f.id,
+          homeTeam: f.home_team.name,
+          awayTeam: f.away_team.name,
+          date: new Date(f.match_date),
+          status: f.status,
+          homeGoals: res?.home_goals ?? f.results?.[0]?.home_goals,
+          awayGoals: res?.away_goals ?? f.results?.[0]?.away_goals,
+          round: f.round,
+        };
+      }) || [];
 
       const upcomingMatches = fixturesData?.filter(f => {
         const matchDate = new Date(f.match_date);
@@ -181,16 +188,19 @@ export default function PublicLeague() {
 
       const completedMatches = fixturesData?.filter(f => 
         f.status === "completed"
-      ).map(f => ({
-        id: f.id,
-        homeTeam: f.home_team.name,
-        awayTeam: f.away_team.name,
-        date: new Date(f.match_date),
-        status: f.status,
-        homeGoals: f.results?.[0]?.home_goals,
-        awayGoals: f.results?.[0]?.away_goals,
-        round: f.round,
-      })) || [];
+      ).map(f => {
+        const res = resultsByFixture.get(f.id);
+        return {
+          id: f.id,
+          homeTeam: f.home_team.name,
+          awayTeam: f.away_team.name,
+          date: new Date(f.match_date),
+          status: f.status,
+          homeGoals: res?.home_goals ?? f.results?.[0]?.home_goals,
+          awayGoals: res?.away_goals ?? f.results?.[0]?.away_goals,
+          round: f.round,
+        };
+      }) || [];
 
       setTodayFixtures(todayMatches);
       setUpcomingFixtures(upcomingMatches);
