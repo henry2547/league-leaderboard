@@ -159,10 +159,35 @@ export default function SeasonManage() {
 
     setGenerating(true);
     try {
-      // Generate round-robin fixtures for this round
-      const allFixtures = [];
-      const numTeams = teams.length;
-      const totalRounds = numTeams % 2 === 0 ? numTeams - 1 : numTeams;
+      // Check if fixtures already exist for this round
+      const { data: existingFixtures } = await supabase
+        .from("fixtures")
+        .select("id")
+        .eq("season_id", id)
+        .eq("round", round);
+
+      if (existingFixtures && existingFixtures.length > 0) {
+        toast({
+          variant: "destructive",
+          title: "Fixtures already exist",
+          description: `Round ${round} fixtures have already been generated.`,
+        });
+        setGenerating(false);
+        return;
+      }
+
+      // Proper EPL-style round-robin algorithm
+      const teamList = [...teams];
+      const numTeams = teamList.length;
+      const isOdd = numTeams % 2 === 1;
+      
+      // Add a "bye" team if odd number of teams
+      if (isOdd) {
+        teamList.push({ id: "bye", name: "BYE" } as any);
+      }
+
+      const totalTeams = teamList.length;
+      const totalRounds = (totalTeams - 1) * 2; // Each team plays each other twice (home & away)
       
       if (round > totalRounds) {
         toast({
@@ -174,36 +199,60 @@ export default function SeasonManage() {
         return;
       }
 
-      const matchesPerRound = Math.floor(numTeams / 2);
+      const matchesPerRound = totalTeams / 2;
       const startDate = new Date(season.start_date);
+      const roundFixtures: any[] = [];
+      
+      // Determine if this is second half of season (reverse fixtures)
+      const isSecondHalf = round > (totalTeams - 1);
+      const actualRound = isSecondHalf ? round - (totalTeams - 1) : round;
+      
+      // Calculate match date (one week per round)
       const roundDate = new Date(startDate);
-      roundDate.setDate(roundDate.getDate() + (round - 1) * 7); // One week between rounds
-
-      for (let match = 0; match < matchesPerRound; match++) {
-        const home = ((round - 1) + match) % (numTeams - 1);
-        const away = (numTeams - 1 - match + (round - 1)) % (numTeams - 1);
-
-        const homeIdx = match === 0 ? numTeams - 1 : home;
-        const awayIdx = away;
-
-        if (homeIdx !== awayIdx) {
-          allFixtures.push({
+      roundDate.setDate(roundDate.getDate() + (round - 1) * 7);
+      
+      // Generate fixtures for this round using round-robin algorithm
+      for (let matchIndex = 0; matchIndex < matchesPerRound; matchIndex++) {
+        let homeIndex, awayIndex;
+        
+        if (matchIndex === 0) {
+          // First team stays fixed
+          homeIndex = 0;
+          awayIndex = actualRound;
+        } else {
+          // Other teams rotate
+          homeIndex = ((actualRound - matchIndex) + totalTeams - 1) % (totalTeams - 1) + 1;
+          awayIndex = ((actualRound + matchIndex - 1) % (totalTeams - 1)) + 1;
+        }
+        
+        let homeTeam = teamList[homeIndex];
+        let awayTeam = teamList[awayIndex];
+        
+        // Reverse home and away for second half of season
+        if (isSecondHalf) {
+          [homeTeam, awayTeam] = [awayTeam, homeTeam];
+        }
+        
+        // Skip if bye team
+        if (homeTeam.id !== "bye" && awayTeam.id !== "bye") {
+          roundFixtures.push({
             season_id: id,
-            home_team_id: teams[homeIdx].id,
-            away_team_id: teams[awayIdx].id,
+            home_team_id: homeTeam.id,
+            away_team_id: awayTeam.id,
             match_date: roundDate.toISOString(),
             round: round,
+            status: "scheduled",
           });
         }
       }
 
-      const { error } = await supabase.from("fixtures").insert(allFixtures);
+      const { error } = await supabase.from("fixtures").insert(roundFixtures);
 
       if (error) throw error;
 
       toast({
         title: "Fixtures generated!",
-        description: `Round ${round} fixtures have been created (${allFixtures.length} matches).`,
+        description: `Round ${round} fixtures created (${roundFixtures.length} matches). ${isSecondHalf ? 'Return fixtures' : 'First leg'}.`,
       });
 
       setFixtureDialogOpen(false);
